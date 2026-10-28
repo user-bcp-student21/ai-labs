@@ -3,6 +3,7 @@ import { ChangeDetectorRef, Component, NgZone, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import axios from 'axios';
 import { formatTaskLabel } from '../utils/legacy-format';
+import { clearSessionToken, readSessionToken } from '../session/session-token';
 
 const STATUS_LABELS: Record<string, string> = {
   TODO: 'Por hacer',
@@ -33,7 +34,7 @@ export class DashboardComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    const token = localStorage.getItem('workshop_token');
+    const token = readSessionToken();
     this.user = JSON.parse(localStorage.getItem('workshop_user') || '{}');
     if (!token) {
       await this.router.navigate(['/login']);
@@ -72,7 +73,7 @@ export class DashboardComponent implements OnInit {
   }
 
   async logout(): Promise<void> {
-    localStorage.removeItem('workshop_token');
+    clearSessionToken();
     localStorage.removeItem('workshop_user');
     await this.router.navigate(['/login']);
   }

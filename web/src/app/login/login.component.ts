@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import axios from 'axios';
 import merge from 'lodash/merge';
+import { saveSessionToken } from '../session/session-token';
 
 @Component({
   selector: 'app-login',
@@ -44,7 +45,7 @@ export class LoginComponent {
             { timeout: 5000 }
           );
           if (response && response.data && response.data.token) {
-            localStorage.setItem('workshop_token', response.data.token);
+            saveSessionToken(response.data.token);
             localStorage.setItem('workshop_user', JSON.stringify(response.data.user));
             localStorage.setItem('workshop_preferences', JSON.stringify(this.preferences));
             await this.router.navigate(['/dashboard']);
