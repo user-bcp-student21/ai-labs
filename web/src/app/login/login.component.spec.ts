@@ -12,6 +12,7 @@ vi.mock('axios', () => ({
 
 describe('LoginComponent characterization', () => {
   let storedValues: Map<string, string>;
+  let sessionValues: Map<string, string>;
   let router: Router;
   let navigate: ReturnType<typeof vi.fn>;
 
@@ -21,6 +22,12 @@ describe('LoginComponent characterization', () => {
       getItem: (key: string) => storedValues.get(key) ?? null,
       setItem: (key: string, value: string) => storedValues.set(key, value),
       removeItem: (key: string) => storedValues.delete(key)
+    });
+    sessionValues = new Map();
+    vi.stubGlobal('sessionStorage', {
+      getItem: (key: string) => sessionValues.get(key) ?? null,
+      setItem: (key: string, value: string) => sessionValues.set(key, value),
+      removeItem: (key: string) => sessionValues.delete(key)
     });
     navigate = vi.fn().mockResolvedValue(true);
     router = { navigate } as unknown as Router;
@@ -67,7 +74,8 @@ describe('LoginComponent characterization', () => {
       { username: 'student', password: 'fake-password', client: 'angular-workshop' },
       { timeout: 5000 }
     );
-    expect(storedValues.get('workshop_token')).toBe('fake-token');
+    expect(sessionValues.get('workshop_token')).toBe('fake-token');
+    expect(storedValues.has('workshop_token')).toBe(false);
     expect(storedValues.get('workshop_user')).toBe('{"username":"student"}');
     expect(storedValues.get('workshop_preferences')).toBe(JSON.stringify(component.preferences));
     expect(navigate).toHaveBeenCalledWith(['/dashboard']);
@@ -117,7 +125,7 @@ describe('LoginComponent characterization', () => {
 
     expect(component.message).toContain('No se pudo autenticar a student.');
     expect(component.message).toContain('Network Error');
-    expect(storedValues.has('workshop_token')).toBe(false);
+    expect(sessionValues.has('workshop_token')).toBe(false);
     expect(navigate).not.toHaveBeenCalled();
   });
 

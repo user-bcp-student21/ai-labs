@@ -14,6 +14,8 @@ vi.mock('axios', () => ({
 
 describe('login-to-tasks flow', () => {
   let storedValues: Map<string, string>;
+  let sessionValues: Map<string, string>;
+
   let navigate: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -22,6 +24,12 @@ describe('login-to-tasks flow', () => {
       getItem: (key: string) => storedValues.get(key) ?? null,
       setItem: (key: string, value: string) => storedValues.set(key, value),
       removeItem: (key: string) => storedValues.delete(key)
+    });
+    sessionValues = new Map();
+    vi.stubGlobal('sessionStorage', {
+      getItem: (key: string) => sessionValues.get(key) ?? null,
+      setItem: (key: string, value: string) => sessionValues.set(key, value),
+      removeItem: (key: string) => sessionValues.delete(key)
     });
     navigate = vi.fn().mockResolvedValue(true);
     vi.clearAllMocks();
@@ -50,7 +58,8 @@ describe('login-to-tasks flow', () => {
 
     await login.login();
 
-    expect(storedValues.get('workshop_token')).toBe('fake-token');
+    expect(sessionValues.get('workshop_token')).toBe('fake-token');
+    expect(storedValues.has('workshop_token')).toBe(false);
     expect(navigate).toHaveBeenCalledWith(['/dashboard']);
 
     const changeDetector = { detectChanges: vi.fn() } as unknown as ChangeDetectorRef;

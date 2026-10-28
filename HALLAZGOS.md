@@ -23,3 +23,35 @@
 - `docs/ENDPOINTS.md` no existe; falta contrastar el flujo observado con el contrato acordado.
 - La suite de pruebas con cobertura no se ejecuto porque se omitio la llamada a la herramienta. No hay resultado de pruebas ni porcentaje de cobertura registrado.
 - No se ejecuto auditoria SCA; estado de advisories y aplicabilidad pendientes.
+
+### Candidatos de discovery (web)
+
+#### H-WEB-08 — El dashboard parsea el usuario almacenado fuera del manejo de errores
+- Componente: `web`.
+- Estado: `CANDIDATO`.
+- Tipo: Bug.
+- Evidencia: `web/src/app/dashboard/dashboard.component.ts:37,41-42`.
+- Impacto: si `workshop_user` contiene JSON invalido, `JSON.parse` puede rechazar `ngOnInit` antes de entrar al `try/catch`; no se ejecuta la ruta de redireccion por falta de token ni el estado de error del dashboard.
+- Prioridad propuesta: media.
+- Contrato potencialmente afectado: comportamiento de `/dashboard` cuando la sesion local esta corrupta; el comportamiento esperado para ese estado no esta acordado.
+- Como validarlo: prueba unitaria con `workshop_user` malformado y verificaciones de rechazo/estado actual; acordar el comportamiento seguro esperado y probar que no quede una excepcion sin manejar.
+
+#### H-WEB-09 — El valor de `owner` se concatena sin codificacion de query
+- Componente: `web`.
+- Estado: `CANDIDATO`.
+- Tipo: Bug.
+- Evidencia: `web/src/app/dashboard/dashboard.component.ts:43`; el login solo comprueba que username no sea vacio en `web/src/app/login/login.component.ts:33-38`.
+- Impacto: si un username permitido contiene caracteres reservados de URL, la concatenacion puede cambiar como se interpreta la query y el valor de `owner` recibido por el servicio.
+- Prioridad propuesta: baja.
+- Contrato potencialmente afectado: parametro `owner` de `GET /api/tasks`; el conjunto de caracteres permitidos para username no esta especificado en el codigo inspeccionado.
+- Como validarlo: prueba con un username ficticio que contenga separadores de query, analiza la URL resultante con `URL`/`URLSearchParams` y confirma el contrato de caracteres permitidos antes de decidir el comportamiento esperado.
+
+#### H-WEB-10 — La consulta de tareas no configura un timeout local
+- Componente: `web`.
+- Estado: `CANDIDATO`.
+- Tipo: Bug.
+- Evidencia: `web/src/app/dashboard/dashboard.component.ts:25,43-45,65-70`; no se encontro configuracion de Axios global en `web/src/`.
+- Impacto: si la solicitud queda pendiente sin resolverse ni rechazarse, `loading` permanece verdadero y la plantilla mantiene el estado de carga.
+- Prioridad propuesta: media.
+- Contrato potencialmente afectado: disponibilidad y tiempo de espera de `GET /api/tasks`; no hay timeout acordado para este endpoint.
+- Como validarlo: revisar una prueba con transporte controlado que mantenga la promesa pendiente; si se acuerda un limite, verificar que la UI termine la carga y presente el error al vencerlo.
