@@ -13,7 +13,10 @@ vi.mock('axios', () => ({
 
 describe('DashboardComponent characterization', () => {
   let storedValues: Map<string, string>;
+<<<<<<< HEAD
   let sessionValues: Map<string, string>;
+=======
+>>>>>>> b8c0b65831f76b64bf68427dd22fc2d5c817f9b5
   let navigate: ReturnType<typeof vi.fn>;
   let component: DashboardComponent;
 
@@ -24,12 +27,15 @@ describe('DashboardComponent characterization', () => {
       setItem: (key: string, value: string) => storedValues.set(key, value),
       removeItem: (key: string) => storedValues.delete(key)
     });
+<<<<<<< HEAD
     sessionValues = new Map();
     vi.stubGlobal('sessionStorage', {
       getItem: (key: string) => sessionValues.get(key) ?? null,
       setItem: (key: string, value: string) => sessionValues.set(key, value),
       removeItem: (key: string) => sessionValues.delete(key)
     });
+=======
+>>>>>>> b8c0b65831f76b64bf68427dd22fc2d5c817f9b5
     navigate = vi.fn().mockResolvedValue(true);
     const router = { navigate } as unknown as Router;
     const changeDetector = { detectChanges: vi.fn() } as unknown as ChangeDetectorRef;
@@ -53,7 +59,11 @@ describe('DashboardComponent characterization', () => {
   });
 
   it('loads tasks using the stored username and bearer token', async () => {
+<<<<<<< HEAD
     sessionValues.set('workshop_token', 'fake-token');
+=======
+    storedValues.set('workshop_token', 'fake-token');
+>>>>>>> b8c0b65831f76b64bf68427dd22fc2d5c817f9b5
     storedValues.set('workshop_user', '{"username":"student"}');
     const tasks = [
       { id: 1, owner: 'student', priority: 'HIGH', status: 'TODO', title: 'Task', description: 'Fake task' },
@@ -75,7 +85,11 @@ describe('DashboardComponent characterization', () => {
   });
 
   it('exposes a request error and clears the loading state', async () => {
+<<<<<<< HEAD
     sessionValues.set('workshop_token', 'fake-token');
+=======
+    storedValues.set('workshop_token', 'fake-token');
+>>>>>>> b8c0b65831f76b64bf68427dd22fc2d5c817f9b5
     storedValues.set('workshop_user', '{"username":"student"}');
     vi.mocked(axios.get).mockRejectedValue(new Error('fake network error'));
 
@@ -86,7 +100,11 @@ describe('DashboardComponent characterization', () => {
   });
 
   it('shows an invalid-token response without clearing the session or redirecting', async () => {
+<<<<<<< HEAD
     sessionValues.set('workshop_token', 'fake-token');
+=======
+    storedValues.set('workshop_token', 'fake-token');
+>>>>>>> b8c0b65831f76b64bf68427dd22fc2d5c817f9b5
     storedValues.set('workshop_user', '{"username":"student"}');
     vi.mocked(axios.get).mockRejectedValue(
       Object.assign(new Error('Request failed with status code 401'), {
@@ -98,12 +116,20 @@ describe('DashboardComponent characterization', () => {
 
     expect(component.error).toBe('Invalid token');
     expect(component.loading).toBe(false);
+<<<<<<< HEAD
     expect(sessionValues.get('workshop_token')).toBe('fake-token');
+=======
+    expect(storedValues.get('workshop_token')).toBe('fake-token');
+>>>>>>> b8c0b65831f76b64bf68427dd22fc2d5c817f9b5
     expect(navigate).not.toHaveBeenCalled();
   });
 
   it('shows a task-request timeout rejection and clears the loading state', async () => {
+<<<<<<< HEAD
     sessionValues.set('workshop_token', 'fake-token');
+=======
+    storedValues.set('workshop_token', 'fake-token');
+>>>>>>> b8c0b65831f76b64bf68427dd22fc2d5c817f9b5
     storedValues.set('workshop_user', '{"username":"student"}');
     vi.mocked(axios.get).mockRejectedValue(new Error('timeout of 5000ms exceeded'));
 
@@ -114,7 +140,11 @@ describe('DashboardComponent characterization', () => {
   });
 
   it('shows an error when the task response has no data', async () => {
+<<<<<<< HEAD
     sessionValues.set('workshop_token', 'fake-token');
+=======
+    storedValues.set('workshop_token', 'fake-token');
+>>>>>>> b8c0b65831f76b64bf68427dd22fc2d5c817f9b5
     storedValues.set('workshop_user', '{"username":"student"}');
     vi.mocked(axios.get).mockResolvedValue({} as never);
 
@@ -125,13 +155,20 @@ describe('DashboardComponent characterization', () => {
   });
 
   it('clears token and user but preserves preferences on logout', async () => {
+<<<<<<< HEAD
     sessionValues.set('workshop_token', 'fake-token');
+=======
+    storedValues.set('workshop_token', 'fake-token');
+>>>>>>> b8c0b65831f76b64bf68427dd22fc2d5c817f9b5
     storedValues.set('workshop_user', '{"username":"student"}');
     storedValues.set('workshop_preferences', '{"theme":"dark"}');
 
     await component.logout();
 
+<<<<<<< HEAD
     expect(sessionValues.has('workshop_token')).toBe(false);
+=======
+>>>>>>> b8c0b65831f76b64bf68427dd22fc2d5c817f9b5
     expect(storedValues.has('workshop_token')).toBe(false);
     expect(storedValues.has('workshop_user')).toBe(false);
     expect(storedValues.get('workshop_preferences')).toBe('{"theme":"dark"}');
