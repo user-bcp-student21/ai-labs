@@ -12,10 +12,7 @@ vi.mock('axios', () => ({
 
 describe('LoginComponent characterization', () => {
   let storedValues: Map<string, string>;
-<<<<<<< HEAD
   let sessionValues: Map<string, string>;
-=======
->>>>>>> b8c0b65831f76b64bf68427dd22fc2d5c817f9b5
   let router: Router;
   let navigate: ReturnType<typeof vi.fn>;
 
@@ -26,15 +23,12 @@ describe('LoginComponent characterization', () => {
       setItem: (key: string, value: string) => storedValues.set(key, value),
       removeItem: (key: string) => storedValues.delete(key)
     });
-<<<<<<< HEAD
     sessionValues = new Map();
     vi.stubGlobal('sessionStorage', {
       getItem: (key: string) => sessionValues.get(key) ?? null,
       setItem: (key: string, value: string) => sessionValues.set(key, value),
       removeItem: (key: string) => sessionValues.delete(key)
     });
-=======
->>>>>>> b8c0b65831f76b64bf68427dd22fc2d5c817f9b5
     navigate = vi.fn().mockResolvedValue(true);
     router = { navigate } as unknown as Router;
     vi.clearAllMocks();
@@ -80,12 +74,8 @@ describe('LoginComponent characterization', () => {
       { username: 'student', password: 'fake-password', client: 'angular-workshop' },
       { timeout: 5000 }
     );
-<<<<<<< HEAD
     expect(sessionValues.get('workshop_token')).toBe('fake-token');
     expect(storedValues.has('workshop_token')).toBe(false);
-=======
-    expect(storedValues.get('workshop_token')).toBe('fake-token');
->>>>>>> b8c0b65831f76b64bf68427dd22fc2d5c817f9b5
     expect(storedValues.get('workshop_user')).toBe('{"username":"student"}');
     expect(storedValues.get('workshop_preferences')).toBe(JSON.stringify(component.preferences));
     expect(navigate).toHaveBeenCalledWith(['/dashboard']);
@@ -135,11 +125,7 @@ describe('LoginComponent characterization', () => {
 
     expect(component.message).toContain('No se pudo autenticar a student.');
     expect(component.message).toContain('Network Error');
-<<<<<<< HEAD
     expect(sessionValues.has('workshop_token')).toBe(false);
-=======
-    expect(storedValues.has('workshop_token')).toBe(false);
->>>>>>> b8c0b65831f76b64bf68427dd22fc2d5c817f9b5
     expect(navigate).not.toHaveBeenCalled();
   });
 
