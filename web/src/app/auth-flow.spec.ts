@@ -14,10 +14,7 @@ vi.mock('axios', () => ({
 
 describe('login-to-tasks flow', () => {
   let storedValues: Map<string, string>;
-<<<<<<< HEAD
   let sessionValues: Map<string, string>;
-=======
->>>>>>> b8c0b65831f76b64bf68427dd22fc2d5c817f9b5
   let navigate: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -27,15 +24,12 @@ describe('login-to-tasks flow', () => {
       setItem: (key: string, value: string) => storedValues.set(key, value),
       removeItem: (key: string) => storedValues.delete(key)
     });
-<<<<<<< HEAD
     sessionValues = new Map();
     vi.stubGlobal('sessionStorage', {
       getItem: (key: string) => sessionValues.get(key) ?? null,
       setItem: (key: string, value: string) => sessionValues.set(key, value),
       removeItem: (key: string) => sessionValues.delete(key)
     });
-=======
->>>>>>> b8c0b65831f76b64bf68427dd22fc2d5c817f9b5
     navigate = vi.fn().mockResolvedValue(true);
     vi.clearAllMocks();
   });
@@ -63,12 +57,8 @@ describe('login-to-tasks flow', () => {
 
     await login.login();
 
-<<<<<<< HEAD
     expect(sessionValues.get('workshop_token')).toBe('fake-token');
     expect(storedValues.has('workshop_token')).toBe(false);
-=======
-    expect(storedValues.get('workshop_token')).toBe('fake-token');
->>>>>>> b8c0b65831f76b64bf68427dd22fc2d5c817f9b5
     expect(navigate).toHaveBeenCalledWith(['/dashboard']);
 
     const changeDetector = { detectChanges: vi.fn() } as unknown as ChangeDetectorRef;
@@ -82,5 +72,23 @@ describe('login-to-tasks flow', () => {
     expect(dashboard.visibleTasks).toHaveLength(1);
     expect(dashboard.visibleTasks[0].title).toBe('Task');
     expect(dashboard.loading).toBe(false);
+  });
+
+  it('does not reuse the previous session after logout', async () => {
+    const router = { navigate } as unknown as Router;
+    sessionValues.set('workshop_token', 'fake-token');
+    storedValues.set('workshop_user', '{"username":"student"}');
+    const changeDetector = { detectChanges: vi.fn() } as unknown as ChangeDetectorRef;
+    const zone = { run: (callback: () => void) => callback() } as unknown as NgZone;
+    const dashboard = new DashboardComponent(router, changeDetector, zone);
+
+    await dashboard.logout();
+    vi.mocked(axios.get).mockClear();
+    navigate.mockClear();
+    await dashboard.ngOnInit();
+
+    expect(sessionValues.has('workshop_token')).toBe(false);
+    expect(axios.get).not.toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith(['/login']);
   });
 });

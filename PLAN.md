@@ -44,6 +44,14 @@ Se proponen cambios para `H-WEB-01` y `H-WEB-02`, ambos existentes y en estado `
 
 - `docs/ENDPOINTS.md` no existe; los endpoints y el flujo anteriores son observados en el cliente, no un contrato acordado.
 - `web/src/app/login/login.component.spec.ts` y `web/src/app/dashboard/dashboard.component.spec.ts` contienen pruebas de caracterizacion para `H-WEB-01` y `H-WEB-02`, antes de cambios de produccion.
-- Ejecucion pendiente: `npm test` con cwd `web/` fue solicitada, pero la llamada a la herramienta se omitio y no produjo resultado. No se afirmara que las pruebas pasaron; detenerse aqui hasta ejecutar la caracterizacion.
+- Ejecucion de caracterizacion: `npm test` con cwd `web/` se ejecuto y pasó; el resultado real está en la actualizacion siguiente. Esta viñeta reemplaza la anotacion anterior de ejecucion pendiente.
 - La aprobacion registrada arriba identifica a Karen, fecha 2026/10/26 e incluye `H-WEB-01` y `H-WEB-02`. Las frases anteriores que niegan la aprobacion quedan como texto desactualizado pendiente de reconciliar sin alterar el registro humano.
 - No se modifico codigo de produccion. No se ejecuto build.
+- Actualizacion (caracterizacion ejecutada, `web`, `H-WEB-01` / `H-WEB-02`):
+  - Conflictos de merge de `web/src/app/auth-flow.spec.ts`, `web/src/app/login/login.component.spec.ts` y `web/src/app/dashboard/dashboard.component.spec.ts` resueltos conservando el lado `HEAD` (`sessionStorage`). Verificado: sin marcadores en `web/src`.
+  - Comando: `npm test` desde `web/` (Vitest 3.2.4). Antes de añadir casos: 4 archivos, 16 pruebas, pasaron. Despues: 4 archivos, 17 pruebas, pasaron (2026-10-29, ejecución verificada a las 09:32:25).
+  - Casos añadidos, solo en specs y sin cambios de produccion: login sin `token` no guarda sesion (`H-WEB-01`); el token no aparece como valor en `localStorage` tras login (criterio 1 de `H-WEB-01`); el dashboard no lee el token desde `localStorage` (criterio 2); logout con token heredado en ambos almacenes (criterio 4); logout seguido de reingreso no reutiliza la sesion (criterio 4, en `auth-flow.spec.ts`).
+  - `H-WEB-02`: el caso `student <em>local</em>` en `login.component.spec.ts` solo verifica que el texto del usuario se conserva literal en la cadena del mensaje. No prueba el render en el DOM ni protege frente a XSS; no debe usarse como evidencia de cierre de `H-WEB-02`.
+  - Hallazgo: el codigo actual guarda el token en `sessionStorage` (`web/src/app/session/session-token.ts`), no en `localStorage` como describen esta seccion, `HALLAZGOS.md` y `HU-01.md`. La lectura desde JavaScript del mismo origen sigue siendo posible; `H-WEB-01` permanece `Pendiente`.
+  - Pendiente: aprobacion humana de la resolucion de conflictos (tarea 0.5 de `openspec/changes/reduce-web-token-persistence/tasks.md`). No se registro aprobacion nueva.
+  - La ejecucion pendiente indicada arriba queda resuelta por este registro. No se ejecutaron build ni cobertura en este paso.
