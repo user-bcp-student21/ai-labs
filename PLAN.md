@@ -55,3 +55,11 @@ Se proponen cambios para `H-WEB-01` y `H-WEB-02`, ambos existentes y en estado `
   - Hallazgo: el codigo actual guarda el token en `sessionStorage` (`web/src/app/session/session-token.ts`), no en `localStorage` como describen esta seccion, `HALLAZGOS.md` y `HU-01.md`. La lectura desde JavaScript del mismo origen sigue siendo posible; `H-WEB-01` permanece `Pendiente`.
   - Pendiente: aprobacion humana de la resolucion de conflictos (tarea 0.5 de `openspec/changes/reduce-web-token-persistence/tasks.md`). No se registro aprobacion nueva.
   - La ejecucion pendiente indicada arriba queda resuelta por este registro. No se ejecutaron build ni cobertura en este paso.
+  - Implementacion `reduce-web-token-persistence`, fase 2 y 3 (2026-10-29), solo `web/`, sin cambios de produccion:
+    - Busqueda de accesos al token (tarea 2.1): `grep` de `workshop_token|sessionStorage|localStorage` en `web/src`. Solo `web/src/app/session/session-token.ts` accede al token en produccion; `login.component.ts` y `dashboard.component.ts` acceden a `workshop_user` y `workshop_preferences`. Sin accesos directos: tareas 2.2 a 2.4 no aplican.
+    - `git status --short -- web` y `git diff --stat -- web/package.json` sin salida: sin cambios en `web/` ni en dependencias.
+    - `npm test` desde `web/`: exit 0; 4 archivos, 17 pruebas, pasaron.
+    - `npm run test:coverage` desde `web/`: exit 0. `session-token.ts` 100 % lineas; `login.component.ts` 96.72 % lineas y 86.66 % ramas; `dashboard.component.ts` 100 % lineas y 85.71 % ramas. Total 81.92 % lineas (incluye archivos no modificados).
+    - `npm run build` desde `web/`: exit 0; advertencias de CommonJS para `axios` y `lodash/merge` en `login.component.ts`.
+    - `python tools/lab.py test web` desde la raiz: exit 0; ejecuta test, test:coverage y build con el resultado anterior.
+    - `H-WEB-01` permanece `Pendiente`. Pendiente: revision humana de resultados y del riesgo residual de `sessionStorage` (tarea 3.6).
