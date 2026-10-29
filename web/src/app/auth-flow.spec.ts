@@ -15,7 +15,6 @@ vi.mock('axios', () => ({
 describe('login-to-tasks flow', () => {
   let storedValues: Map<string, string>;
   let sessionValues: Map<string, string>;
-
   let navigate: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -73,5 +72,23 @@ describe('login-to-tasks flow', () => {
     expect(dashboard.visibleTasks).toHaveLength(1);
     expect(dashboard.visibleTasks[0].title).toBe('Task');
     expect(dashboard.loading).toBe(false);
+  });
+
+  it('does not reuse the previous session after logout', async () => {
+    const router = { navigate } as unknown as Router;
+    sessionValues.set('workshop_token', 'fake-token');
+    storedValues.set('workshop_user', '{"username":"student"}');
+    const changeDetector = { detectChanges: vi.fn() } as unknown as ChangeDetectorRef;
+    const zone = { run: (callback: () => void) => callback() } as unknown as NgZone;
+    const dashboard = new DashboardComponent(router, changeDetector, zone);
+
+    await dashboard.logout();
+    vi.mocked(axios.get).mockClear();
+    navigate.mockClear();
+    await dashboard.ngOnInit();
+
+    expect(sessionValues.has('workshop_token')).toBe(false);
+    expect(axios.get).not.toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith(['/login']);
   });
 });

@@ -15,10 +15,10 @@ Se proponen cambios para `H-WEB-01` y `H-WEB-02`, ambos existentes y en estado `
 
 `docs/ENDPOINTS.md` no existe. Se preservara el comportamiento observado: `POST http://localhost:8080/auth/login` con `username`, `password` y `client`; al recibir token, ir a `/dashboard`; consultar `GET http://localhost:8000/api/tasks?owner=<username>` con `Authorization: Bearer <token>`; y cerrar sesion y volver a `/login`. Evidencia actual: `web/src/app/login/login.component.ts:41-50` y `web/src/app/dashboard/dashboard.component.ts:36-43,74-77`. El token y el usuario se guardan hoy en `localStorage` (`web/src/app/login/login.component.ts:47-48`) y el dashboard los lee de ahi (`web/src/app/dashboard/dashboard.component.ts:36-37`).
 
-### H-WEB-01 — Token de sesion en localStorage
+### H-WEB-01 — Token de sesion accesible desde JavaScript del mismo origen
 
 - **Hallazgo:** `HALLAZGOS.md`, `H-WEB-01`, Vulnerabilidad, severidad media, estado `Pendiente`.
-- **Problema:** el token persiste en `localStorage` y es legible por scripts del mismo origen. En el alcance solo frontend no se puede convertirlo en cookie `HttpOnly` sin soporte y contrato del backend.
+- **Problema:** el token se guarda en `sessionStorage` y es legible por scripts del mismo origen. En el alcance solo frontend no se puede convertirlo en cookie `HttpOnly` sin soporte y contrato del backend.
 - **Cambio propuesto:** crear un servicio de estado del navegador que centralice el acceso a almacenamiento desde login y dashboard. Guardar token y usuario en `sessionStorage`, manteniendo preferencias en `localStorage`; el servicio mantiene la gestion de ambas areas para que los componentes no accedan directamente a `localStorage` o `sessionStorage`. Conservar endpoints, request, respuesta consumida, header Bearer, navegacion y limpieza de sesion. Esto reduce la persistencia entre sesiones del navegador, pero no evita que JavaScript del mismo origen lea el token; registrar ese riesgo residual. `sessionStorage` conserva el estado al recargar la misma pestana, pero no al cerrar la sesion del navegador, por lo que ese cambio de duracion requiere aceptar explicitamente el comportamiento.
 - **Archivos a tocar despues de aprobar el plan:** crear `web/src/app/services/browser-state.service.ts`; modificar `web/src/app/login/login.component.ts` y `web/src/app/dashboard/dashboard.component.ts`; crear pruebas en `web/src/app/login/login.component.spec.ts` y `web/src/app/dashboard/dashboard.component.spec.ts`.
 - **Caracterizacion antes de tocar codigo de produccion:** con Axios y Router simulados y almacenamiento ficticio, comprobar login exitoso (token y usuario guardados, preferencias preservadas y navegacion a dashboard), dashboard sin token (navega a login), consulta con token (mismo endpoint, owner y header Bearer) y logout (borra token/usuario, conserva preferencias y navega a login). Ejecutar primero contra la implementacion actual; despues adaptar las aserciones de almacenamiento a `sessionStorage` y repetirlas.
@@ -44,6 +44,22 @@ Se proponen cambios para `H-WEB-01` y `H-WEB-02`, ambos existentes y en estado `
 
 - `docs/ENDPOINTS.md` no existe; los endpoints y el flujo anteriores son observados en el cliente, no un contrato acordado.
 - `web/src/app/login/login.component.spec.ts` y `web/src/app/dashboard/dashboard.component.spec.ts` contienen pruebas de caracterizacion para `H-WEB-01` y `H-WEB-02`, antes de cambios de produccion.
-- Ejecucion pendiente: `npm test` con cwd `web/` fue solicitada, pero la llamada a la herramienta se omitio y no produjo resultado. No se afirmara que las pruebas pasaron; detenerse aqui hasta ejecutar la caracterizacion.
+- Ejecucion de caracterizacion: `npm test` con cwd `web/` se ejecuto y pasó; el resultado real está en la actualizacion siguiente. Esta viñeta reemplaza la anotacion anterior de ejecucion pendiente.
 - La aprobacion registrada arriba identifica a Karen, fecha 2026/10/26 e incluye `H-WEB-01` y `H-WEB-02`. Las frases anteriores que niegan la aprobacion quedan como texto desactualizado pendiente de reconciliar sin alterar el registro humano.
 - No se modifico codigo de produccion. No se ejecuto build.
+- Actualizacion (caracterizacion ejecutada, `web`, `H-WEB-01` / `H-WEB-02`):
+  - Conflictos de merge de `web/src/app/auth-flow.spec.ts`, `web/src/app/login/login.component.spec.ts` y `web/src/app/dashboard/dashboard.component.spec.ts` resueltos conservando el lado `HEAD` (`sessionStorage`). Verificado: sin marcadores en `web/src`.
+  - Comando: `npm test` desde `web/` (Vitest 3.2.4). Antes de añadir casos: 4 archivos, 16 pruebas, pasaron. Despues: 4 archivos, 17 pruebas, pasaron (2026-10-29, ejecución verificada a las 09:32:25).
+  - Casos añadidos, solo en specs y sin cambios de produccion: login sin `token` no guarda sesion (`H-WEB-01`); el token no aparece como valor en `localStorage` tras login (criterio 1 de `H-WEB-01`); el dashboard no lee el token desde `localStorage` (criterio 2); logout con token heredado en ambos almacenes (criterio 4); logout seguido de reingreso no reutiliza la sesion (criterio 4, en `auth-flow.spec.ts`).
+  - `H-WEB-02`: el caso `student <em>local</em>` en `login.component.spec.ts` solo verifica que el texto del usuario se conserva literal en la cadena del mensaje. No prueba el render en el DOM ni protege frente a XSS; no debe usarse como evidencia de cierre de `H-WEB-02`.
+  - Hallazgo: el codigo actual guarda el token en `sessionStorage` (`web/src/app/session/session-token.ts`), no en `localStorage` como describen esta seccion, `HALLAZGOS.md` y `HU-01.md`. La lectura desde JavaScript del mismo origen sigue siendo posible; `H-WEB-01` permanece `Pendiente`.
+  - Pendiente: aprobacion humana de la resolucion de conflictos (tarea 0.5 de `openspec/changes/reduce-web-token-persistence/tasks.md`). No se registro aprobacion nueva.
+  - La ejecucion pendiente indicada arriba queda resuelta por este registro. No se ejecutaron build ni cobertura en este paso.
+  - Implementacion `reduce-web-token-persistence`, fase 2 y 3 (2026-10-29), solo `web/`, sin cambios de produccion:
+    - Busqueda de accesos al token (tarea 2.1): `grep` de `workshop_token|sessionStorage|localStorage` en `web/src`. Solo `web/src/app/session/session-token.ts` accede al token en produccion; `login.component.ts` y `dashboard.component.ts` acceden a `workshop_user` y `workshop_preferences`. Sin accesos directos: tareas 2.2 a 2.4 no aplican.
+    - `git status --short -- web` y `git diff --stat -- web/package.json` sin salida: sin cambios en `web/` ni en dependencias.
+    - `npm test` desde `web/`: exit 0; 4 archivos, 17 pruebas, pasaron.
+    - `npm run test:coverage` desde `web/`: exit 0. `session-token.ts` 100 % lineas; `login.component.ts` 96.72 % lineas y 86.66 % ramas; `dashboard.component.ts` 100 % lineas y 85.71 % ramas. Total 81.92 % lineas (incluye archivos no modificados).
+    - `npm run build` desde `web/`: exit 0; advertencias de CommonJS para `axios` y `lodash/merge` en `login.component.ts`.
+    - `python tools/lab.py test web` desde la raiz: exit 0; ejecuta test, test:coverage y build con el resultado anterior.
+    - `H-WEB-01` permanece `Pendiente`. Revision humana (tarea 3.6) confirmada por el usuario el 2026-10-29 con R1 aceptado; la seccion 4 sigue pendiente.

@@ -54,6 +54,7 @@ describe('DashboardComponent characterization', () => {
 
   it('loads tasks using the stored username and bearer token', async () => {
     sessionValues.set('workshop_token', 'fake-token');
+    const localGetItem = vi.spyOn(localStorage, 'getItem');
     storedValues.set('workshop_user', '{"username":"student"}');
     const tasks = [
       { id: 1, owner: 'student', priority: 'HIGH', status: 'TODO', title: 'Task', description: 'Fake task' },
@@ -72,6 +73,8 @@ describe('DashboardComponent characterization', () => {
     expect(component.loading).toBe(false);
     expect(component.statusLabel('TODO')).toBe('Por hacer');
     expect(component.statusLabel('unknown')).toBe('unknown');
+    expect(localGetItem).not.toHaveBeenCalledWith('workshop_token');
+
   });
 
   it('exposes a request error and clears the loading state', async () => {
@@ -126,6 +129,7 @@ describe('DashboardComponent characterization', () => {
 
   it('clears token and user but preserves preferences on logout', async () => {
     sessionValues.set('workshop_token', 'fake-token');
+    storedValues.set('workshop_token', 'fake-legacy-token');
     storedValues.set('workshop_user', '{"username":"student"}');
     storedValues.set('workshop_preferences', '{"theme":"dark"}');
 

@@ -76,7 +76,8 @@ describe('LoginComponent characterization', () => {
     );
     expect(sessionValues.get('workshop_token')).toBe('fake-token');
     expect(storedValues.has('workshop_token')).toBe(false);
-    expect(storedValues.get('workshop_user')).toBe('{"username":"student"}');
+    expect(Array.from(storedValues.entries()).flat()).not.toContain('fake-token');
+
     expect(storedValues.get('workshop_preferences')).toBe(JSON.stringify(component.preferences));
     expect(navigate).toHaveBeenCalledWith(['/dashboard']);
     expect(component.busy).toBe(false);
@@ -91,6 +92,8 @@ describe('LoginComponent characterization', () => {
     await component.login();
 
     expect(component.message).toBe('<strong>El backend respondió sin token.</strong>');
+    expect(sessionValues.has('workshop_token')).toBe(false);
+    expect(storedValues.has('workshop_token')).toBe(false);
     expect(navigate).not.toHaveBeenCalled();
   });
 
