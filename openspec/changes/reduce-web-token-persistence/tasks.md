@@ -81,8 +81,9 @@ Solo si la caracterización lo requiere o si queda un acceso directo al token fu
   - Criterio: mismo resultado que los pasos anteriores. Registrar la salida real.
 - [x] 3.5 Registrar evidencia en el documento general de evidencias de la raíz, con componente `web` y `H-WEB-01`, conservando las secciones existentes.
   - Verificación: incluir comando exacto y resultado real (pasó o falló). No afirmar resultados no ejecutados.
-- [ ] 3.6 Revisión humana de los resultados y del riesgo residual de `sessionStorage` (R1 de [design.md](./design.md)).
+- [x] 3.6 Revisión humana de los resultados y del riesgo residual de `sessionStorage` (R1 de [design.md](./design.md)).
   - Criterio: aprobación explícita antes de integrar.
+  - Aprobación: confirmada por el usuario el 2026-10-29 en la conversación del PR #26, con R1 aceptado.
 
 ## 4. Documentación posterior
 

@@ -62,4 +62,4 @@ Se proponen cambios para `H-WEB-01` y `H-WEB-02`, ambos existentes y en estado `
     - `npm run test:coverage` desde `web/`: exit 0. `session-token.ts` 100 % lineas; `login.component.ts` 96.72 % lineas y 86.66 % ramas; `dashboard.component.ts` 100 % lineas y 85.71 % ramas. Total 81.92 % lineas (incluye archivos no modificados).
     - `npm run build` desde `web/`: exit 0; advertencias de CommonJS para `axios` y `lodash/merge` en `login.component.ts`.
     - `python tools/lab.py test web` desde la raiz: exit 0; ejecuta test, test:coverage y build con el resultado anterior.
-    - `H-WEB-01` permanece `Pendiente`. Pendiente: revision humana de resultados y del riesgo residual de `sessionStorage` (tarea 3.6).
+    - `H-WEB-01` permanece `Pendiente`. Revision humana (tarea 3.6) confirmada por el usuario el 2026-10-29 con R1 aceptado; la seccion 4 sigue pendiente.
