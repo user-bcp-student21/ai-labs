@@ -467,9 +467,12 @@ Ejemplo 502 (capturado con `AUTH_HEALTH_URL` apuntando a un puerto cerrado):
 
 **Riesgos pendientes** (registrados en `prompts/HALLAZGOS.md` y `prompts/PLAN.md`):
 
-- **CORS abierto (H-API-08, Aprobado, sin resolver):** `allow_origins=["*"]` con
-  `allow_credentials=True` (`api/app/main.py:29-30`). Starlette refleja cualquier origen con
-  credenciales. Hace falta la lista de orígenes del frontend.
+- **CORS (H-API-08, pendiente de revisión humana):** los orígenes permitidos salen de
+  `WORKSHOP_CORS_ORIGINS` (lista separada por comas; `*` se rechaza al arrancar). Si falta o está
+  vacía se usan `http://localhost:4200` y `http://127.0.0.1:4200`, solo para desarrollo. Un origen
+  no listado no recibe `access-control-allow-origin` (el preflight responde 400). Starlette sigue
+  añadiendo `access-control-allow-credentials` a esa respuesta 400. Falta definir la variable en
+  `compose.yaml` y comprobar el efecto en un navegador real.
 - **Formato del JWT:** el emisor y la audiencia (`reqflow-auth` y `reqflow-api`) y el secreto
   compartido deben coincidir con `auth/`. No se verificó contra `auth/`.
 - **Ruta absoluta en `storedAt`:** expone la ruta del servidor en la respuesta.
@@ -481,7 +484,7 @@ Ejemplo 502 (capturado con `AUTH_HEALTH_URL` apuntando a un puerto cerrado):
 
 ## Preguntas abiertas
 
-1. ¿El frontend necesita algún origen concreto en CORS? Sin esa lista no se puede cerrar H-API-08.
+1. ¿El frontend necesita algún origen concreto en CORS? El valor por defecto asume `http://localhost:4200` y `http://127.0.0.1:4200` (H-API-08); falta confirmar los orígenes de otros entornos.
 2. ¿`auth/` emite tokens con `iss`, `aud`, `exp`, `iat`, `sub` y `role` tal como los requiere
    esta API? No se ha verificado.
 3. ¿Debe el directorio de subidas separarse por owner? Hoy todos comparten el mismo espacio y
