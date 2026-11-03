@@ -1,19 +1,9 @@
-import base64
-import time
 from pathlib import Path
 
 from fastapi.testclient import TestClient
 
 from app.main import create_app
-
-
-def token(username: str = "student", role: str = "STUDENT") -> str:
-    raw = f"{username}|{role}|{int(time.time()) + 3600}|WORKSHOP_SECRET_2026"
-    return base64.b64encode(raw.encode()).decode()
-
-
-def headers(username: str = "student", role: str = "STUDENT") -> dict[str, str]:
-    return {"Authorization": f"Bearer {token(username, role)}"}
+from support import auth_headers as headers
 
 
 def test_lists_seeded_tasks(tmp_path: Path) -> None:
