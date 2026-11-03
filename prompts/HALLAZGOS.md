@@ -71,7 +71,7 @@ aparecen en el código, así que ninguno se marca "No encontrado".
 | H-API-05 | api | SCA: `urllib3 2.5.0` con CVE de descompresión sin límite | Vulnerabilidad | Según GHSA/NVD, CVE-2025-66418 y CVE-2025-66471 afectan versiones anteriores a 2.6.0. El boletín de IBM indica que 2.5.0 también es vulnerable a CVE-2026-21441. Un servidor malicioso puede agotar CPU y memoria. La exposición es acotada: solo `backend-health` la usa, contra una URL fija por configuración. Versión corregida exacta para los tres CVE: Aprobado de confirmar. | api/requirements.txt:4, api/app/main.py:118 | media | Pendiente (revisión local): api/tests/test_dependencies.py valida el entorno instalado, no el pin de api/requirements.txt:4, y no hay evidencia de pip-audit. Cerrar con pip-audit o aprobación de uso de la herramienta. |
 | H-API-06 | api | SCA: `python-multipart 0.0.21` con CVE de path traversal y de consumo excesivo de CPU | Vulnerabilidad | CVE-2026-24486 afecta versiones anteriores a 0.0.22, pero solo con las opciones `UPLOAD_DIR` y `UPLOAD_KEEP_FILENAME=True`, que aquí no se usan. La advisory GHSA-mj87-hwqh-73pj (CVE-2026-40347) pide 0.0.26 o superior por DoS en el parseo multipart; el rango exacto afectado está Aprobado de confirmar. El parser multipart lo usa `/api/requirements`. | api/requirements.txt:5, api/app/main.py:108 | media | Pendiente (revisión local): mismo gap que H-API-05; api/requirements.txt:5 no se verifica con pip-audit y el rango exacto de GHSA-mj87-hwqh-73pj sigue sin confirmar. |
 | H-API-07 | api | Respuestas de error con detalle interno (adicional, no listado en RETO.md) | Vulnerabilidad | El texto de la excepción llega al cliente en el 401 y en `backend-health`. Puede revelar rutas, URLs internas o detalles de parseo. | api/app/main.py:26, api/app/main.py:121 | media | Resuelto: el 401 usa detalle fijo "Invalid token" y el 502 de backend-health no incluye el error interno (api/app/security.py, api/app/services/health.py). |
-| H-API-08 | api | CORS con `allow_origins=["*"]` y `allow_credentials=True` (adicional, no listado en RETO.md) | Vulnerabilidad | Configuración permisiva fija en código, sin lista de orígenes por entorno. Con credenciales habilitadas, cualquier sitio puede hacer peticiones autenticadas desde el navegador. El efecto exacto debe comprobarse en el navegador. | api/app/main.py:49-53 | media | Aprobado |
+| H-API-08 | api | CORS con `allow_origins=["*"]` y `allow_credentials=True` (adicional, no listado en RETO.md) | Vulnerabilidad | Configuración permisiva fija en código, sin lista de orígenes por entorno. Con credenciales habilitadas, cualquier sitio puede hacer peticiones autenticadas desde el navegador. El efecto exacto debe comprobarse en el navegador. | api/app/main.py:49-53 | media | Pendiente (revisión local): orígenes desde WORKSHOP_CORS_ORIGINS sin comodín (api/app/cors.py, api/app/main.py); pruebas en api/tests/test_cors.py (45 passed, cobertura 99,28%). Falta comprobación en navegador y definir la variable en compose.yaml. |
 | H-API-09 | api | Captura amplia de excepciones que enmascara fallos (adicional, relacionado con RETO "Calidad") | Bug | En `backend-health` cualquier fallo devuelve HTTP 200 con `status: 0`, por lo que el cliente no distingue una caída de una respuesta válida. En `legacy_identity` la captura amplia convierte cualquier error en 401. | api/app/main.py:25, api/app/main.py:120-121 | media | Resuelto: fallo del backend responde 502 genérico y se capturan solo errores de urllib3 (api/app/services/health.py). |
 | H-API-10 | api | Rutas, base de datos, reglas y serialización en un solo archivo y una sola función | Refactor | `create_app` concentra la conexión, la creación de la tabla, la siembra, las rutas y la lógica de resumen. Cualquier cambio en una capa afecta a las demás y dificulta las pruebas aisladas. Es el hallazgo arquitectónico de RETO.md. | api/app/main.py:29, api/app/main.py:56, api/app/main.py:67-121 | media | Resuelto: capas en api/app/routes, services, repositories, config.py y database.py; api/app/main.py solo compone la aplicación. |
 | H-API-11 | api | Uso de `dict[str, Any]` crudo en entradas, salidas y serialización | Refactor | Sin modelos Pydantic, el payload no se valida: `str(payload.get(...))` acepta cualquier tipo y convierte `None` en texto. Los contratos no quedan documentados en el código. Es el hallazgo de tipado de RETO.md. | api/app/main.py:78-83, api/app/main.py:91, api/app/main.py:115 | baja | Pendiente (revisión local): la entrada usa Pydantic en api/app/schemas.py, pero las salidas siguen como `dict[str, Any]` en api/app/services/tasks.py:20,24,31,45, api/app/routes/tasks.py:10,16,21,27, api/app/routes/requirements.py:17 y api/app/routes/health.py:11,15. No hay modelos de respuesta. |
@@ -92,3 +92,63 @@ componente api, IDs H-API y resultado real.
 4. Decidir si el rol del token debe autorizar la consulta de otros owners (H-API-04).
 5. Revisar `api/tests/test_api.py:14`: el helper `headers()` no usa la función `token()` de la línea 9 y no pudo confirmarse que la cabecera de autenticación sea la esperada. **Corregido:** `headers()` sí llama a `token()` (api/tests/test_api.py:16 antes del cambio); tras la refactorización el helper delega en api/tests/support.py.
 6. Ejecutar `python tools/lab.py test api` y registrar la salida real en `docs/TESTING.md` (Aprobado).
+
+### Candidatos de discovery (api) - pendiente de revisión humana
+
+Discovery de solo lectura sobre `api/` (más `compose.yaml` solo para el despliegue de api). Estado de todos: CANDIDATO.
+No se creó ningún issue ni se modificó código. Las comprobaciones se hicieron con un script temporal contra una base
+SQLite y un directorio de subida en `%TEMP%` (ya eliminados) y un secreto de prueba aislado; no se ejecutó la suite.
+Nota: los pins de `urllib3 2.6.3` y `python-multipart 0.0.26` (api/requirements.txt:4-5) ya no coinciden con las
+versiones descritas en H-API-05 y H-API-06; no se repiten aquí.
+
+#### H-API-14 - compose.yaml no define WORKSHOP_JWT_SECRET: el contenedor api no arranca
+- Estado: CANDIDATO
+- Evidencia: `compose.yaml:7-19` (servicio `api` sin `WORKSHOP_JWT_SECRET`); `api/app/security.py:26-30`
+  (`RuntimeError` si falta); `api/app/main.py:22,46` (`create_app()` se ejecuta al importar el módulo).
+  Comprobado: `load_jwt_secret()` sin la variable devuelve `RuntimeError: WORKSHOP_JWT_SECRET must be set`.
+- Impacto: `docker compose up` deja api caído; web y `/api/backend-health` dejan de funcionar en el despliegue documentado.
+- Prioridad propuesta: alta
+- Contrato potencialmente afectado: despliegue/arranque (`compose.yaml`), no los endpoints. Cualquier valor debe ser de
+  entorno, sin secretos reales en el repositorio.
+- Cómo validarlo: `docker compose up --build api` y revisar los logs (sin Docker: `python -c "from app.main import app"`
+  en `api/` con la variable sin definir). Tras el cambio, el contenedor debe quedar en ejecución y aceptar un JWT firmado
+  con el mismo secreto que `auth/` (coordinar con H-API-03).
+
+#### H-API-15 - Claims `sub` y `role` del JWT sin validar contenido
+- Estado: CANDIDATO
+- Evidencia: `api/app/security.py:54,58` (`require` solo exige presencia; `Identity(username=claims["sub"], ...)`);
+  `api/app/services/tasks.py:13-14` (owner vacío cae a la identidad). Comprobado con un token válido y `sub=""`:
+  `GET /api/tasks` responde 200 con `[]`, `POST /api/tasks` responde 201 con `owner=""`; con `sub="   "` responde 200 y
+  con `role=""` responde 200. `role` no se usa en ninguna ruta.
+- Impacto: un token firmado con identidad vacía o en blanco se acepta y escribe tareas con owner vacío, que los
+  usuarios reales no pueden consultar. Depende de que `auth/` emita tokens así; la firma sigue siendo necesaria.
+- Prioridad propuesta: media
+- Contrato potencialmente afectado: `Authorization` (401 vs 200) y `owner` de `POST /api/tasks`; `docs/ENDPOINTS.md`
+  no define reglas para `sub` y `role`.
+- Cómo validarlo: pruebas en `api/tests/test_security.py` con `sub` vacío, en blanco, ausente y no textual, y `role`
+  vacío; esperado según el contrato que apruebe la persona responsable (propuesta: 401 con "Invalid token").
+
+#### H-API-16 - `storedAt` expone la ruta absoluta del servidor
+- Estado: CANDIDATO
+- Evidencia: `api/app/services/files.py:25` (`str(target)`); `api/app/routes/requirements.py:19-20`. Comprobado:
+  `POST /api/requirements` devolvió `storedAt` con la ruta absoluta del directorio temporal.
+- Impacto: filtra la estructura de directorios del servidor a cualquier usuario autenticado; es la misma clase de
+  fuga que H-API-07 resolvió para errores.
+- Prioridad propuesta: baja
+- Contrato potencialmente afectado: campo `storedAt` de la respuesta 201 de `POST /api/requirements`, consumido
+  potencialmente por web. Cambiarlo exige aprobación y revisar `docs/ENDPOINTS.md`.
+- Cómo validarlo: prueba que suba `requirements.txt` y verifique que `storedAt` no contiene el directorio de subida
+  (por ejemplo, solo el nombre). Revisar antes si `web/` usa el campo (fuera del alcance de este discovery).
+
+#### H-API-17 - Archivos subidos sin separación por usuario
+- Estado: CANDIDATO
+- Evidencia: `api/app/services/files.py:19-21` (`upload_dir / safe_name`, modo `xb`; el owner no participa en la ruta);
+  `api/app/routes/requirements.py:19-20` (el owner solo se añade a la respuesta). Comprobado: `student` sube `a.txt` y
+  `trainer` subiendo `a.txt` recibe 409.
+- Impacto: todos los usuarios comparten un único espacio de nombres. Un usuario puede bloquear nombres de otro
+  (ocupa `requirements.txt`) y no hay vínculo entre archivo e identidad, contra el principio de autorización ligada
+  a la identidad. No se comprobó lectura ajena: no existe endpoint de descarga.
+- Prioridad propuesta: media
+- Contrato potencialmente afectado: `POST /api/requirements` (409 por nombre repetido y `storedAt`).
+- Cómo validarlo: prueba con dos identidades que suban el mismo nombre; esperado según decisión: 201 para ambos
+  (subdirectorio por `sub` saneado) o 409 documentado. Mantener las pruebas de traversal, extensión y 1 MiB.
