@@ -64,12 +64,3 @@ def test_owner_equal_to_identity_is_allowed(client: TestClient) -> None:
     assert listed.status_code == 200
     assert created.status_code == 201
     assert created.json()["owner"] == "student"
-
-
-def test_cors_preflight_reflects_any_origin_with_credentials(client: TestClient) -> None:
-    response = client.options(
-        "/api/tasks",
-        headers={"Origin": "https://evil.example", "Access-Control-Request-Method": "GET"},
-    )
-    assert response.headers["access-control-allow-origin"] == "https://evil.example"
-    assert response.headers["access-control-allow-credentials"] == "true"

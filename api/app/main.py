@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import DB_PATH_ENV, DEFAULT_DB_PATH, DEFAULT_UPLOAD_DIR, UPLOAD_DIR_ENV
+from app.cors import load_cors_origins
 from app.database import open_database
 from app.errors import ApiError, handle_api_error
 from app.routes.health import build_health_router
@@ -26,7 +27,7 @@ def create_app(db_path: str | None = None, upload_dir: str | None = None) -> Fas
     app.state.upload_dir = selected_uploads
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=load_cors_origins(),
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
